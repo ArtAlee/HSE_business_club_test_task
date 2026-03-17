@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    >
+    <title>HSE Business Club</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4efe6;
+        --panel: #fffaf2;
+        --text: #1f1a17;
+        --muted: #6e6258;
+        --line: #e0d4c5;
+        --accent: #b7562b;
+        --accent-dark: #8d421f;
+        --ok: #1c7c54;
+        --error: #ab2e2e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top right, #f0ceb0 0, transparent 30%),
+          linear-gradient(180deg, #f7f2ea 0%, var(--bg) 100%);
+        color: var(--text);
+      }
+
+      .page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+
+      .hero,
+      .card {
+        background: rgba(255, 250, 242, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: 0 14px 40px rgba(72, 43, 20, 0.08);
+      }
+
+      .hero {
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+
+      .card {
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+
+      h1, h2, h3, p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .balance {
+        font-size: 44px;
+        font-weight: 700;
+        margin-top: 12px;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .row-wrap {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: white;
+        border-radius: 14px;
+        padding: 14px 16px;
+        font-size: 16px;
+        color: var(--text);
+      }
+
+      button {
+        border: 0;
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: var(--accent);
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #ead9c5;
+        color: var(--text);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
+      .product {
+        display: grid;
+        gap: 8px;
+        padding: 14px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .product:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #efe3d4;
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .status {
+        min-height: 24px;
+        margin-top: 12px;
+        font-weight: 600;
+      }
+
+      .status.ok {
+        color: var(--ok);
+      }
+
+      .status.error {
+        color: var(--error);
+      }
+
+      .history-item {
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .history-item:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      code {
+        word-break: break-all;
+        background: #f0e5d8;
+        padding: 2px 5px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="muted">Telegram Mini App</p>
+        <h1>HSE Business Club</h1>
+        <p class="muted">Авторизация идёт через Telegram WebApp initData. После входа можно сканировать QR-токены и тратить баллы.</p>
+        <div class="status" id="status"></div>
+      </section>
+
+      <section class="card">
+        <h2>Авторизация</h2>
+        <p class="muted" id="auth-meta">Открой эту страницу из Telegram через кнопку бота.</p>
+        <div class="row-wrap" style="margin-top: 12px;">
+          <button id="login-btn">Войти через Telegram</button>
+          <button id="refresh-btn" class="secondary hidden">Обновить данные</button>
+        </div>
+      </section>
+
+      <section class="card hidden" id="profile-card">
+        <p class="muted">Пользователь</p>
+        <h2 id="profile-name">-</h2>
+        <div class="balance" id="balance">0</div>
+        <p class="muted">баллов</p>
+      </section>
+
+      <section class="card hidden" id="scan-card">
+        <h2>Сканирование QR</h2>
+        <p class="muted">Вставь токен из QR или из админского ответа `/api/admin/points/{id}/qr-token`.</p>
+        <div style="margin-top: 12px;">
+          <input id="qr-token-input" placeholder="QR token">
+        </div>
+        <div class="row-wrap" style="margin-top: 12px;">
+          <button id="scan-camera-btn" class="secondary">Сканировать камерой</button>
+          <button id="scan-btn">Начислить баллы</button>
+        </div>
+      </section>
+
+      <section class="card hidden" id="products-card">
+        <h2>Магазин</h2>
+        <div id="products"></div>
+      </section>
+
+      <section class="card hidden" id="history-card">
+        <h2>История начислений</h2>
+        <div id="history"></div>
+      </section>
+
+      <section class="card hidden" id="purchases-card">
+        <h2>Купленные товары</h2>
+        <div id="purchases"></div>
+      </section>
+    </main>
+
+    <script>
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+
+      const state = {
+        token: null,
+        me: null,
+        products: [],
+      };
+
+      const statusEl = document.getElementById("status");
+      const authMetaEl = document.getElementById("auth-meta");
+      const loginBtn = document.getElementById("login-btn");
+      const refreshBtn = document.getElementById("refresh-btn");
+      const profileCard = document.getElementById("profile-card");
+      const scanCard = document.getElementById("scan-card");
+      const productsCard = document.getElementById("products-card");
+      const historyCard = document.getElementById("history-card");
+      const purchasesCard = document.getElementById("purchases-card");
+      const profileNameEl = document.getElementById("profile-name");
+      const balanceEl = document.getElementById("balance");
+      const historyEl = document.getElementById("history");
+      const purchasesEl = document.getElementById("purchases");
+      const productsEl = document.getElementById("products");
+      const qrTokenInput = document.getElementById("qr-token-input");
+      const scanCameraBtn = document.getElementById("scan-camera-btn");
+      const scanBtn = document.getElementById("scan-btn");
+
+      function setStatus(message, kind = "") {
+        statusEl.textContent = message;
+        statusEl.className = `status ${kind}`.trim();
+      }
+
+      function authHeaders() {
+        return state.token ? { Authorization: `Bearer ${state.token}` } : {};
+      }
+
+      async function api(path, options = {}) {
+        const response = await fetch(path, {
+          ...options,
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+            ...(options.headers || {}),
+          },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.detail || `HTTP ${response.status}`);
+        }
+        return data;
+      }
+
+      function renderProfile() {
+        if (!state.me) {
+          return;
+        }
+        const user = tg.initDataUnsafe?.user || {};
+        profileNameEl.textContent = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "Telegram user";
+        balanceEl.textContent = state.me.balance;
+        profileCard.classList.remove("hidden");
+        scanCard.classList.remove("hidden");
+        productsCard.classList.remove("hidden");
+        historyCard.classList.remove("hidden");
+        purchasesCard.classList.remove("hidden");
+        refreshBtn.classList.remove("hidden");
+      }
+
+      function renderHistory() {
+        if (!state.me || !state.me.history.length) {
+          historyEl.innerHTML = '<p class="muted">Начислений пока нет.</p>';
+          return;
+        }
+        historyEl.innerHTML = state.me.history.map((item) => `
+          <div class="history-item">
+            <div><strong>${item.point_name}</strong></div>
+            <div class="muted">${new Date(item.visited_at).toLocaleString()}</div>
+            <div class="pill" style="margin-top:8px;">+${item.points_awarded} баллов</div>
+          </div>
+        `).join("");
+      }
+
+      function renderProducts() {
+        if (!state.products.length) {
+          productsEl.innerHTML = '<p class="muted">Товаров пока нет.</p>';
+          return;
+        }
+        productsEl.innerHTML = state.products.map((product) => `
+          <div class="product">
+            <div class="row" style="justify-content:space-between;">
+              <strong>${product.name}</strong>
+              <span class="pill">${product.price_points} баллов</span>
+            </div>
+            <div class="muted">${product.description || "Без описания"}</div>
+            <div class="row" style="justify-content:space-between;">
+              <span class="muted">Остаток: ${product.stock}</span>
+              <button ${product.stock <= 0 ? "disabled" : ""} onclick="redeemProduct(${product.id})">Забрать</button>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      function renderPurchases() {
+        if (!state.me || !state.me.purchases.length) {
+          purchasesEl.innerHTML = '<p class="muted">Покупок пока нет.</p>';
+          return;
+        }
+        purchasesEl.innerHTML = state.me.purchases.map((item) => `
+          <div class="history-item">
+            <div><strong>${item.product_name}</strong></div>
+            <div class="muted">${new Date(item.purchased_at).toLocaleString()}</div>
+            <div class="pill" style="margin-top:8px;">-${item.points_spent} баллов</div>
+          </div>
+        `).join("");
+      }
+
+      async function loadProducts() {
+        state.products = await api("/api/shop/products", { method: "GET" });
+        renderProducts();
+      }
+
+      async function loadMe() {
+        state.me = await api("/api/me", { method: "GET" });
+        renderProfile();
+        renderHistory();
+        renderPurchases();
+      }
+
+      async function login() {
+        if (!tg.initData) {
+          setStatus("Эта страница должна быть открыта из Telegram Mini App.", "error");
+          authMetaEl.innerHTML = 'Сейчас <code>initData</code> пустой. Открой страницу через кнопку <code>web_app</code> у бота.';
+          return;
+        }
+        loginBtn.disabled = true;
+        setStatus("Выполняю авторизацию...", "");
+        try {
+          const data = await api("/api/auth/telegram", {
+            method: "POST",
+            body: JSON.stringify({ init_data: tg.initData }),
+          });
+          state.token = data.access_token;
+          setStatus("Авторизация прошла успешно1111.", "ok");
+          authMetaEl.textContent = "JWT получен. Данные загружены из backend.";
+          await Promise.all([loadMe(), loadProducts()]);
+        } catch (error) {
+          setStatus(error.message, "error");
+        } finally {
+          loginBtn.disabled = false;
+        }
+      }
+
+      async function redeemProduct(productId) {
+        setStatus("Обмениваю баллы на товар...", "");
+        try {
+          const data = await api(`/api/shop/redeem/${productId}`, { method: "POST" });
+          setStatus(data.message, "ok");
+          await Promise.all([loadMe(), loadProducts()]);
+        } catch (error) {
+          setStatus(error.message, "error");
+        }
+      }
+
+      async function scanToken() {
+        const token = qrTokenInput.value.trim();
+        if (!token) {
+          setStatus("Вставь QR token.", "error");
+          return;
+        }
+        scanBtn.disabled = true;
+        setStatus("Начисляю баллы...", "");
+        try {
+          const data = await api("/api/scan", {
+            method: "POST",
+            body: JSON.stringify({ token }),
+          });
+          setStatus(`${data.message}: +${data.awarded_points}`, "ok");
+          qrTokenInput.value = "";
+          await Promise.all([loadMe(), loadProducts()]);
+        } catch (error) {
+          setStatus(error.message, "error");
+        } finally {
+          scanBtn.disabled = false;
+        }
+      }
+
+      function startCameraScan() {
+        if (!state.token) {
+          setStatus("Сначала авторизуйся.", "error");
+          return;
+        }
+        if (typeof tg.showScanQrPopup !== "function") {
+          setStatus("QR-сканер не поддерживается в этом клиенте Telegram.", "error");
+          return;
+        }
+
+        setStatus("Открыл камеру для сканирования QR...", "");
+        tg.showScanQrPopup(
+          { text: "Наведите камеру на QR-код точки" },
+          async (scannedText) => {
+            if (!scannedText) {
+              return false;
+            }
+
+            try {
+              const data = await api("/api/scan", {
+                method: "POST",
+                body: JSON.stringify({ token: scannedText }),
+              });
+              if (typeof tg.closeScanQrPopup === "function") {
+                tg.closeScanQrPopup();
+              }
+              setStatus(`${data.message}: +${data.awarded_points}`, "ok");
+              await Promise.all([loadMe(), loadProducts()]);
+              return true;
+            } catch (error) {
+              setStatus(error.message, "error");
+              return false;
+            }
+          }
+        );
+      }
+
+      loginBtn.addEventListener("click", login);
+      refreshBtn.addEventListener("click", async () => {
+        if (!state.token) {
+          setStatus("Сначала авторизуйся.", "error");
+          return;
+        }
+        try {
+          await Promise.all([loadMe(), loadProducts()]);
+          setStatus("Данные обновлены.", "ok");
+        } catch (error) {
+          setStatus(error.message, "error");
+        }
+      });
+      scanCameraBtn.addEventListener("click", startCameraScan);
+      scanBtn.addEventListener("click", scanToken);
+
+      window.redeemProduct = redeemProduct;
+
+      if (tg.initDataUnsafe?.user) {
+        const user = tg.initDataUnsafe.user;
+        authMetaEl.textContent = `Telegram user: ${user.first_name || ""} ${user.last_name || ""} (${user.id})`;
+      }
+    </script>
+  </body>
+</html>
