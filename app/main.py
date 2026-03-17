@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import secrets
+from io import BytesIO
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+import qrcode
 from sqlalchemy import desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -46,6 +49,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
 @app.on_event("startup")
@@ -242,6 +246,29 @@ def rotate_qr_token(point_id: int, db: Session = Depends(get_db)) -> QrTokenResp
         expires_at=expires_at,
         ttl_seconds=settings.qr_ttl_seconds,
     )
+
+
+@app.get(
+    f"{settings.api_prefix}/admin/points/{{point_id}}/qr-code",
+    dependencies=[Depends(require_admin)],
+)
+def get_point_qr_code(point_id: int, db: Session = Depends(get_db)) -> Response:
+    point = db.get(Point, point_id)
+    if not point:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Point not found")
+
+    qr_token = db.scalar(
+        select(QrToken)
+        .where(QrToken.point_id == point_id, QrToken.is_active.is_(True))
+        .order_by(desc(QrToken.created_at))
+    )
+    if not qr_token:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Active QR token not found")
+
+    qr_image = qrcode.make(qr_token.token)
+    buffer = BytesIO()
+    qr_image.save(buffer, format="PNG")
+    return Response(content=buffer.getvalue(), media_type="image/png")
 
 
 @app.get(f"{settings.api_prefix}/leaderboard", response_model=list[LeaderboardItem])
