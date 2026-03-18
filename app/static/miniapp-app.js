@@ -240,14 +240,14 @@ createApp({
           <div v-if="state.products.length" class="products-grid">
             <article v-for="product in state.products" :key="product.id" class="product-card">
               <div class="product-head">
-                <div>
+                <div class="product-copy">
                   <div class="item-title">{{ product.name }}</div>
                   <div class="item-meta">{{ product.description || 'Без описания' }}</div>
                 </div>
                 <span class="pill">{{ product.price_points }} баллов</span>
               </div>
               <div class="list-top">
-                <span class="item-meta">{{ product.stock > 0 ? 'Доступно для обмена' : 'Временно недоступно' }}</span>
+                <span class="item-meta">{{ product.stock > 0 ? 'В наличии' : 'Временно недоступно' }}</span>
                 <button
                   class="button-primary"
                   @click="redeemProduct(product.id)"
