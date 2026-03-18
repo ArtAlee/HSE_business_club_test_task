@@ -235,8 +235,7 @@ createApp({
         </section>
 
         <section v-if="isAuthorized" class="card fade-up">
-          <h2>Магазин призов</h2>
-          <p class="card-subtitle">Товары подтягиваются из backend в реальном времени.</p>
+          <h2>Магазин мерча</h2>
           <div v-if="state.products.length" class="products-grid">
             <article v-for="product in state.products" :key="product.id" class="product-card">
               <div class="product-head">
