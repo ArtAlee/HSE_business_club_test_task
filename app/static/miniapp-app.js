@@ -193,7 +193,7 @@ createApp({
         <div class="eyebrow">Программа участника</div>
         <h1>HSE Business Club</h1>
         <p>
-          Cканируйте QR на события и покупайте мерч за баллы
+          Cканируйте QR на событиях и покупайте мерч за баллы
         </p>
         <div :class="['status', state.statusKind]">{{ state.statusMessage }}</div>
       </section>
