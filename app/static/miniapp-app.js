@@ -270,7 +270,7 @@ createApp({
               </div>
               <div class="list-top">
                 <span class="item-meta">
-                  {{ product.stock > 0 ? `Остаток: ${product.stock}` : 'Временно недоступно' }}
+                  {{ product.stock > 0 ? 'Остаток: ' + product.stock : 'Временно недоступно' }}
                 </span>
                 <button
                   class="button-primary"
