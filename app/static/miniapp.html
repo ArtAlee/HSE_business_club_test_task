@@ -240,6 +240,7 @@
       .pill {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
         padding: 8px 12px;
         border-radius: 999px;
@@ -247,6 +248,8 @@
         color: var(--text);
         font-size: 13px;
         font-weight: 700;
+        line-height: 1;
+        text-align: center;
       }
 
       .list {
@@ -310,7 +313,11 @@
 
       .product-copy {
         display: grid;
-        gap: 8px;
+        gap: 0;
+      }
+
+      .product-description {
+        margin-top: 6px;
       }
 
       .empty {

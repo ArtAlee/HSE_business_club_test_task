@@ -242,7 +242,7 @@ createApp({
               <div class="product-head">
                 <div class="product-copy">
                   <div class="item-title">{{ product.name }}</div>
-                  <div class="item-meta">{{ product.description || 'Без описания' }}</div>
+                  <div class="item-meta product-description">{{ product.description || 'Без описания' }}</div>
                 </div>
                 <span class="pill">{{ product.price_points }} баллов</span>
               </div>
