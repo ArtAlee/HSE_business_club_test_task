@@ -77,7 +77,7 @@ curl -X POST http://localhost:8000/api/admin/points/1/qr-code \
 ```
 
 Для быстрой ручной проверки в репозитории есть готовый пример QR-кода:
-[assets/qr_for_testing.png](/Users/artaleee/projects/test_tasks/HSE_business_club_backend/assets/qr_for_testing.png)
+![Тестовый QR-код](assets/qr_for_testing.png)
 
 Создать товар:
 
