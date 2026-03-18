@@ -167,14 +167,10 @@ createApp({
       return [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || "Telegram user";
     });
     const authMeta = computed(() => {
-      if (state.token) {
-        return "JWT получен. Баланс, покупки и магазин синхронизированы с backend.";
-      }
       if (telegramUser.value) {
-        const user = telegramUser.value;
-        return `Telegram user: ${user.first_name || ""} ${user.last_name || ""} (${user.id})`;
+        return "Открой разделы ниже, чтобы сканировать точки и обменивать баллы на товары.";
       }
-      return "Открой эту страницу из Telegram через кнопку бота, чтобы получить initData.";
+      return "Открой эту страницу из Telegram через кнопку бота и авторизуйся, чтобы начать.";
     });
     const isAuthorized = computed(() => Boolean(state.token && state.me));
 
@@ -194,11 +190,10 @@ createApp({
   template: `
     <main class="app-shell">
       <section class="hero fade-up">
-        <div class="eyebrow">Telegram Mini App • Vue 3</div>
+        <div class="eyebrow">Программа участника</div>
         <h1>HSE Business Club</h1>
         <p>
-          Один экран для авторизации, сканирования QR, просмотра накоплений и обмена баллов
-          на мерч форума.
+          Cканируйте QR на события и покупайте мерч за баллы
         </p>
         <div :class="['status', state.statusKind]">{{ state.statusMessage }}</div>
       </section>
@@ -209,10 +204,6 @@ createApp({
             <div>
               <h2>Вход через Telegram</h2>
               <p class="card-subtitle">{{ authMeta }}</p>
-              <div class="meta-list">
-                <span class="pill">initData {{ telegramUser ? 'доступен' : 'не найден' }}</span>
-                <span class="pill">JWT {{ state.token ? 'выдан' : 'не выдан' }}</span>
-              </div>
             </div>
             <div class="hero-actions" style="align-self:end; justify-content:flex-end;">
               <button class="button-primary" @click="login" :disabled="state.isLoginPending">
@@ -278,7 +269,7 @@ createApp({
                 <span class="pill">{{ product.price_points }} баллов</span>
               </div>
               <div class="list-top">
-                <span class="item-meta">Остаток: {{ product.stock }}</span>
+                <span class="item-meta">{{ product.stock > 0 ? 'Доступно для обмена' : 'Временно недоступно' }}</span>
                 <button
                   class="button-primary"
                   @click="redeemProduct(product.id)"
