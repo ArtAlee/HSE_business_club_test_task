@@ -13,7 +13,6 @@ const state = reactive({
   statusMessage: "",
   statusKind: "",
   isLoginPending: false,
-  isRefreshPending: false,
   isScanPending: false,
   isRedeemPending: false,
   qrTokenInput: "",
@@ -72,22 +71,6 @@ async function login() {
     setStatus(error.message, "error");
   } finally {
     state.isLoginPending = false;
-  }
-}
-
-async function refreshData() {
-  if (!state.token) {
-    setStatus("Сначала авторизуйся.", "error");
-    return;
-  }
-  state.isRefreshPending = true;
-  try {
-    await hydrateDashboard();
-    setStatus("Данные обновлены.", "ok");
-  } catch (error) {
-    setStatus(error.message, "error");
-  } finally {
-    state.isRefreshPending = false;
   }
 }
 
@@ -181,7 +164,6 @@ createApp({
       authMeta,
       isAuthorized,
       login,
-      refreshData,
       scanByToken,
       startCameraScan,
       redeemProduct,
@@ -199,7 +181,7 @@ createApp({
       </section>
 
       <div class="layout">
-        <section class="card fade-up">
+        <section v-if="!isAuthorized" class="card fade-up">
           <div class="grid two">
             <div>
               <h2>Вход через Telegram</h2>
@@ -209,10 +191,6 @@ createApp({
               <button class="button-primary" @click="login" :disabled="state.isLoginPending">
                 <span v-if="state.isLoginPending" class="spinner"></span>
                 <template v-else>Войти через Telegram</template>
-              </button>
-              <button class="button-secondary" @click="refreshData" :disabled="!state.token || state.isRefreshPending">
-                <span v-if="state.isRefreshPending" class="spinner" style="border-top-color:#241a13; border-color:rgba(36,26,19,0.24);"></span>
-                <template v-else>Обновить</template>
               </button>
             </div>
           </div>
@@ -240,7 +218,7 @@ createApp({
         <section v-if="isAuthorized" class="card fade-up">
           <h2>Сканирование точки</h2>
           <p class="card-subtitle">
-            Сканируй QR через Telegram-камеру или вставь токен вручную из админского endpoint.
+            Сканируй QR через Telegram-камеру или вставь токен вручную.
           </p>
           <div class="scan-grid">
             <input v-model="state.qrTokenInput" placeholder="QR token" />
