@@ -1,23 +1,21 @@
 # HSE Business Club Backend
 
-Небольшой backend для Telegram Mini App. Пользователь сканирует QR-коды на точках форума, получает баллы и тратит их на товары в магазине.
+Backend для Telegram Mini App (+примитивный frontend для мини аппа). Пользователь сканирует QR-коды на точках форума, получает баллы и тратит их на товары в магазине.
 
-Внутри:
+Стек:
 - FastAPI
 - PostgreSQL
-- JWT-авторизация после проверки Telegram `initData`
-- QR-коды с TTL и ротацией
-- Mini App frontend прямо внутри сервиса
+- Telegram Mini App 
 
 ## Как запустить
 
-Сначала скопируй переменные окружения:
+Cкопировать переменные окружения:
 
 ```bash
 cp .env.example .env
 ```
 
-Минимум, что стоит проверить в `.env`:
+Опционально, изменить содержимое в `.env`:
 
 ```env
 DATABASE_URL=postgresql+psycopg2://app:app@db:5432/hse_business_club
@@ -27,17 +25,16 @@ QR_TTL_SECONDS=120
 ADMIN_TOKEN=admin
 ```
 
-Дальше обычный запуск:
+Запустить сервис черещ docker compose:
 
 ```bash
-docker compose up --build
+docker compose up --build -d
 ```
 
 После старта:
 - Swagger: `http://localhost:8000/docs`
-- Mini App: `http://localhost:8000/mini`
+- Mini App (front): `http://localhost:8000/mini`
 - Healthcheck: `http://localhost:8000/health`
-- Adminer: `http://localhost:8080`
 
 ## Что умеет API
 
@@ -95,7 +92,7 @@ curl -X POST http://localhost:8000/api/shop/products \
 
 ## Быстрая локальная проверка
 
-Есть smoke test:
+Smoke test:
 
 ```bash
 DATABASE_URL=sqlite:////tmp/hse_business_club_smoke.db \
@@ -105,16 +102,14 @@ JWT_SECRET=test-secret \
 python3 scripts/smoke_test.py
 ```
 
-И скрипт для заполнения магазина товарами:
+Cкрипт для заполнения магазина товарами:
 
 ```bash
 ADMIN_TOKEN=admin python3 scripts/seed_products.py
 ```
 
-Если API не на `localhost:8000`, можно передать `API_URL`:
+Cкрипт для создания тестовых точек:
 
 ```bash
-API_URL=https://your-host \
-ADMIN_TOKEN=admin \
-python3 scripts/seed_products.py
+ADMIN_TOKEN=admin python3 scripts/seed_points.py
 ```
