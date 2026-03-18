@@ -66,7 +66,7 @@ async function login() {
     });
     state.token = data.access_token;
     await hydrateDashboard();
-    setStatus("Авторизация прошла успешно.", "ok");
+    setStatus("", "");
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
