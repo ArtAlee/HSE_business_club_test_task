@@ -57,7 +57,7 @@ def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
 
 
-@app.get("/health")
+@app.get("/health", tags=["System"])
 def healthcheck() -> dict:
     return {"status": "ok"}
 
@@ -68,7 +68,7 @@ def miniapp_page() -> FileResponse:
     return FileResponse(MINIAPP_FILE)
 
 
-@app.post(f"{settings.api_prefix}/auth/telegram", response_model=TokenResponse)
+@app.post(f"{settings.api_prefix}/auth/telegram", response_model=TokenResponse, tags=["Auth"])
 def telegram_auth(payload: TelegramAuthRequest, db: Session = Depends(get_db)) -> TokenResponse:
     telegram_user = verify_telegram_init_data(payload.init_data)
 
@@ -85,7 +85,7 @@ def telegram_auth(payload: TelegramAuthRequest, db: Session = Depends(get_db)) -
     return TokenResponse(access_token=create_access_token(user.telegram_id))
 
 
-@app.get(f"{settings.api_prefix}/me", response_model=CabinetResponse)
+@app.get(f"{settings.api_prefix}/me", response_model=CabinetResponse, tags=["User"])
 def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> CabinetResponse:
     visits = db.execute(
         select(PointVisit, Point)
@@ -121,7 +121,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
     return CabinetResponse(balance=get_user_balance(db, current_user.id), history=history, purchases=purchases)
 
 
-@app.post(f"{settings.api_prefix}/scan", response_model=ScanResponse)
+@app.post(f"{settings.api_prefix}/scan", response_model=ScanResponse, tags=["User"])
 def scan_qr(
     payload: ScanRequest,
     current_user: User = Depends(get_current_user),
@@ -167,12 +167,17 @@ def scan_qr(
     )
 
 
-@app.get(f"{settings.api_prefix}/shop/products", response_model=list[ProductRead])
+@app.get(f"{settings.api_prefix}/shop/products", response_model=list[ProductRead], tags=["Shop"])
 def list_products(db: Session = Depends(get_db)) -> list[Product]:
     return list(db.scalars(select(Product).order_by(Product.id)).all())
 
 
-@app.post(f"{settings.api_prefix}/shop/products", response_model=ProductRead, dependencies=[Depends(require_admin)])
+@app.post(
+    f"{settings.api_prefix}/shop/products",
+    response_model=ProductRead,
+    dependencies=[Depends(require_admin)],
+    tags=["Admin"],
+)
 def create_product(payload: ProductCreate, db: Session = Depends(get_db)) -> Product:
     product = Product(**payload.model_dump())
     db.add(product)
@@ -181,7 +186,7 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)) -> Pro
     return product
 
 
-@app.post(f"{settings.api_prefix}/shop/redeem/{{product_id}}", response_model=RedemptionResponse)
+@app.post(f"{settings.api_prefix}/shop/redeem/{{product_id}}", response_model=RedemptionResponse, tags=["Shop"])
 def redeem_product(
     product_id: int,
     current_user: User = Depends(get_current_user),
@@ -213,7 +218,12 @@ def redeem_product(
     )
 
 
-@app.post(f"{settings.api_prefix}/admin/points", response_model=PointRead, dependencies=[Depends(require_admin)])
+@app.post(
+    f"{settings.api_prefix}/admin/points",
+    response_model=PointRead,
+    dependencies=[Depends(require_admin)],
+    tags=["Admin"],
+)
 def create_point(payload: PointCreate, db: Session = Depends(get_db)) -> Point:
     point = Point(**payload.model_dump())
     db.add(point)
@@ -226,6 +236,7 @@ def create_point(payload: PointCreate, db: Session = Depends(get_db)) -> Point:
     f"{settings.api_prefix}/admin/points/{{point_id}}/qr-token",
     response_model=QrTokenResponse,
     dependencies=[Depends(require_admin)],
+    tags=["Admin"],
 )
 def rotate_qr_token(point_id: int, db: Session = Depends(get_db)) -> QrTokenResponse:
     point = db.get(Point, point_id)
@@ -251,6 +262,7 @@ def rotate_qr_token(point_id: int, db: Session = Depends(get_db)) -> QrTokenResp
 @app.get(
     f"{settings.api_prefix}/admin/points/{{point_id}}/qr-code",
     dependencies=[Depends(require_admin)],
+    tags=["Admin"],
 )
 def get_point_qr_code(point_id: int, db: Session = Depends(get_db)) -> Response:
     point = db.get(Point, point_id)
@@ -271,7 +283,7 @@ def get_point_qr_code(point_id: int, db: Session = Depends(get_db)) -> Response:
     return Response(content=buffer.getvalue(), media_type="image/png")
 
 
-@app.get(f"{settings.api_prefix}/leaderboard", response_model=list[LeaderboardItem])
+@app.get(f"{settings.api_prefix}/leaderboard", response_model=list[LeaderboardItem], tags=["User"])
 def leaderboard(
     limit: int = Query(default=10, ge=1, le=100),
     offset: int = Query(default=0, ge=0),

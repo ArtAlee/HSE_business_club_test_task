@@ -16,11 +16,23 @@ const state = reactive({
   isScanPending: false,
   isRedeemPending: false,
   qrTokenInput: "",
+  modalMessage: "",
+  isModalOpen: false,
 });
 
 function setStatus(message, kind = "") {
   state.statusMessage = message;
   state.statusKind = kind;
+}
+
+function openErrorModal(message) {
+  state.modalMessage = message;
+  state.isModalOpen = true;
+}
+
+function closeErrorModal() {
+  state.modalMessage = "";
+  state.isModalOpen = false;
 }
 
 async function api(path, options = {}) {
@@ -53,7 +65,7 @@ async function hydrateDashboard() {
 
 async function login() {
   if (!tg?.initData) {
-    setStatus("Эта страница должна быть открыта из Telegram Mini App.", "error");
+    openErrorModal("Эта страница должна быть открыта из Telegram Mini App.");
     return;
   }
 
@@ -68,7 +80,7 @@ async function login() {
     await hydrateDashboard();
     setStatus("", "");
   } catch (error) {
-    setStatus(error.message, "error");
+    openErrorModal(error.message);
   } finally {
     state.isLoginPending = false;
   }
@@ -77,7 +89,7 @@ async function login() {
 async function scanByToken(token) {
   const cleanToken = token.trim();
   if (!cleanToken) {
-    setStatus("Вставь QR token.", "error");
+    openErrorModal("Вставь QR token.");
     return false;
   }
 
@@ -93,7 +105,7 @@ async function scanByToken(token) {
     setStatus(`${data.message}: +${data.awarded_points}`, "ok");
     return true;
   } catch (error) {
-    setStatus(error.message, "error");
+    openErrorModal(error.message);
     return false;
   } finally {
     state.isScanPending = false;
@@ -102,11 +114,11 @@ async function scanByToken(token) {
 
 async function startCameraScan() {
   if (!state.token) {
-    setStatus("Сначала авторизуйся.", "error");
+    openErrorModal("Сначала авторизуйся.");
     return;
   }
   if (typeof tg?.showScanQrPopup !== "function") {
-    setStatus("QR-сканер не поддерживается в этом клиенте Telegram.", "error");
+    openErrorModal("QR-сканер не поддерживается в этом клиенте Telegram.");
     return;
   }
 
@@ -126,7 +138,7 @@ async function startCameraScan() {
 
 async function redeemProduct(productId) {
   if (!state.token) {
-    setStatus("Сначала авторизуйся.", "error");
+    openErrorModal("Сначала авторизуйся.");
     return;
   }
   state.isRedeemPending = true;
@@ -136,7 +148,7 @@ async function redeemProduct(productId) {
     await hydrateDashboard();
     setStatus(data.message, "ok");
   } catch (error) {
-    setStatus(error.message, "error");
+    openErrorModal(error.message);
   } finally {
     state.isRedeemPending = false;
   }
@@ -167,10 +179,21 @@ createApp({
       scanByToken,
       startCameraScan,
       redeemProduct,
+      closeErrorModal,
     };
   },
   template: `
     <main class="app-shell">
+      <div v-if="state.isModalOpen" class="modal-backdrop" @click.self="closeErrorModal">
+        <section class="modal fade-up">
+          <h2 class="modal-title">Не удалось выполнить действие</h2>
+          <p class="modal-text">{{ state.modalMessage }}</p>
+          <div class="modal-actions">
+            <button class="button-primary" @click="closeErrorModal">Понятно</button>
+          </div>
+        </section>
+      </div>
+
       <section class="hero fade-up">
         <div class="eyebrow">Программа участника</div>
         <h1>HSE Business Club</h1>
@@ -203,7 +226,7 @@ createApp({
               <div class="profile-name">{{ profileName }}</div>
               <p class="card-subtitle">Баланс считается как начисления за посещения минус обмены на товары.</p>
               <div class="meta-list">
-                <span class="pill">Начислений: {{ state.me.history.length }}</span>
+                <span class="pill">Событий посещено: {{ state.me.history.length }}</span>
                 <span class="pill">Покупок: {{ state.me.purchases.length }}</span>
               </div>
             </div>
@@ -246,7 +269,9 @@ createApp({
                 <span class="pill price-pill">{{ product.price_points }} баллов</span>
               </div>
               <div class="list-top">
-                <span class="item-meta">{{ product.stock > 0 ? 'В наличии' : 'Временно недоступно' }}</span>
+                <span class="item-meta">
+                  {{ product.stock > 0 ? `Остаток: ${product.stock}` : 'Временно недоступно' }}
+                </span>
                 <button
                   class="button-primary"
                   @click="redeemProduct(product.id)"
