@@ -244,7 +244,7 @@ createApp({
                   <div class="item-title">{{ product.name }}</div>
                   <div class="item-meta product-description">{{ product.description || 'Без описания' }}</div>
                 </div>
-                <span class="pill">{{ product.price_points }} баллов</span>
+                <span class="pill price-pill">{{ product.price_points }} баллов</span>
               </div>
               <div class="list-top">
                 <span class="item-meta">{{ product.stock > 0 ? 'В наличии' : 'Временно недоступно' }}</span>
