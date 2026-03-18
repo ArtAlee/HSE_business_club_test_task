@@ -18,6 +18,8 @@ const state = reactive({
   qrTokenInput: "",
   modalMessage: "",
   isModalOpen: false,
+  modalTitle: "",
+  modalKind: "error",
 });
 
 function setStatus(message, kind = "") {
@@ -25,14 +27,27 @@ function setStatus(message, kind = "") {
   state.statusKind = kind;
 }
 
-function openErrorModal(message) {
+function openModal(title, message, kind = "error") {
+  setStatus("", "");
+  state.modalTitle = title;
   state.modalMessage = message;
+  state.modalKind = kind;
   state.isModalOpen = true;
 }
 
 function closeErrorModal() {
+  state.modalTitle = "";
   state.modalMessage = "";
+  state.modalKind = "error";
   state.isModalOpen = false;
+}
+
+function openErrorModal(message) {
+  openModal("Не удалось выполнить действие", message, "error");
+}
+
+function openSuccessModal(message) {
+  openModal("Готово", message, "success");
 }
 
 async function api(path, options = {}) {
@@ -102,7 +117,7 @@ async function scanByToken(token) {
     });
     state.qrTokenInput = "";
     await hydrateDashboard();
-    setStatus(`${data.message}: +${data.awarded_points}`, "ok");
+    openSuccessModal(`${data.message}: +${data.awarded_points} баллов`);
     return true;
   } catch (error) {
     openErrorModal(error.message);
@@ -186,10 +201,15 @@ createApp({
     <main class="app-shell">
       <div v-if="state.isModalOpen" class="modal-backdrop" @click.self="closeErrorModal">
         <section class="modal fade-up">
-          <h2 class="modal-title">Не удалось выполнить действие</h2>
+          <h2 class="modal-title">{{ state.modalTitle }}</h2>
           <p class="modal-text">{{ state.modalMessage }}</p>
           <div class="modal-actions">
-            <button class="button-primary" @click="closeErrorModal">Понятно</button>
+            <button
+              :class="state.modalKind === 'success' ? 'button-secondary' : 'button-primary'"
+              @click="closeErrorModal"
+            >
+              Понятно
+            </button>
           </div>
         </section>
       </div>

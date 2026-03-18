@@ -57,7 +57,7 @@ docker compose up --build
 ```bash
 curl -X POST http://localhost:8000/api/admin/points \
   -H 'Content-Type: application/json' \
-  -H 'X-Admin-Token: super-admin-token' \
+  -H 'X-Admin-Token: admin' \
   -d '{
     "name": "Стенд партнёра 1",
     "description": "Сканирование у стенда",
@@ -69,7 +69,7 @@ curl -X POST http://localhost:8000/api/admin/points \
 
 ```bash
 curl -X POST http://localhost:8000/api/admin/points/1/qr-code \
-  -H 'X-Admin-Token: super-admin-token' \
+  -H 'X-Admin-Token: admin' \
   --output point-1.png
 ```
 
@@ -78,7 +78,7 @@ curl -X POST http://localhost:8000/api/admin/points/1/qr-code \
 ```bash
 curl -X POST http://localhost:8000/api/shop/products \
   -H 'Content-Type: application/json' \
-  -H 'X-Admin-Token: super-admin-token' \
+  -H 'X-Admin-Token: admin' \
   -d '{
     "name": "Футболка",
     "description": "Мерч форума",
@@ -131,7 +131,7 @@ curl -X POST http://localhost:8000/api/shop/redeem/1 \
 ```bash
 DATABASE_URL=sqlite:////tmp/hse_business_club_smoke.db \
 TELEGRAM_BOT_TOKEN=test-bot-token \
-ADMIN_TOKEN=super-admin-token \
+ADMIN_TOKEN=admin \
 JWT_SECRET=test-secret \
 python3 scripts/smoke_test.py
 ```
