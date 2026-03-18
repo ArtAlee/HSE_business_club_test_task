@@ -27,7 +27,6 @@ from app.schemas import (
     PurchaseHistoryItem,
     ProductCreate,
     ProductRead,
-    QrTokenResponse,
     RedemptionResponse,
     ScanRequest,
     ScanResponse,
@@ -233,12 +232,11 @@ def create_point(payload: PointCreate, db: Session = Depends(get_db)) -> Point:
 
 
 @app.post(
-    f"{settings.api_prefix}/admin/points/{{point_id}}/qr-token",
-    response_model=QrTokenResponse,
+    f"{settings.api_prefix}/admin/points/{{point_id}}/qr-code",
     dependencies=[Depends(require_admin)],
     tags=["Admin"],
 )
-def rotate_qr_token(point_id: int, db: Session = Depends(get_db)) -> QrTokenResponse:
+def get_point_qr_code(point_id: int, db: Session = Depends(get_db)) -> Response:
     point = db.get(Point, point_id)
     if not point:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Point not found")
@@ -249,33 +247,6 @@ def rotate_qr_token(point_id: int, db: Session = Depends(get_db)) -> QrTokenResp
     qr_token = QrToken(point_id=point_id, token=token, expires_at=expires_at, is_active=True)
     db.add(qr_token)
     db.commit()
-
-    return QrTokenResponse(
-        point_id=point.id,
-        point_name=point.name,
-        token=token,
-        expires_at=expires_at,
-        ttl_seconds=settings.qr_ttl_seconds,
-    )
-
-
-@app.get(
-    f"{settings.api_prefix}/admin/points/{{point_id}}/qr-code",
-    dependencies=[Depends(require_admin)],
-    tags=["Admin"],
-)
-def get_point_qr_code(point_id: int, db: Session = Depends(get_db)) -> Response:
-    point = db.get(Point, point_id)
-    if not point:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Point not found")
-
-    qr_token = db.scalar(
-        select(QrToken)
-        .where(QrToken.point_id == point_id, QrToken.is_active.is_(True))
-        .order_by(desc(QrToken.created_at))
-    )
-    if not qr_token:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Active QR token not found")
 
     qr_image = qrcode.make(qr_token.token)
     buffer = BytesIO()

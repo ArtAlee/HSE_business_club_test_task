@@ -13,7 +13,9 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+from app.db import SessionLocal
 from app.main import app
+from app.models import QrToken
 
 
 def require_env(name: str) -> str:
@@ -60,14 +62,17 @@ def main() -> None:
             "create_point",
         )
 
-        qr = assert_status(
-            client.post(
-                f"/api/admin/points/{point['id']}/qr-token",
-                headers={"X-Admin-Token": admin_token},
-            ),
-            200,
-            "rotate_qr",
-        )
+        qr = client.post(f"/api/admin/points/{point['id']}/qr-code", headers={"X-Admin-Token": admin_token})
+        print("generate_qr_code", qr.status_code, qr.headers.get("content-type"))
+        if qr.status_code != 200:
+            raise RuntimeError(f"generate_qr_code failed: expected 200, got {qr.status_code}")
+        if qr.headers.get("content-type") != "image/png":
+            raise RuntimeError("generate_qr_code failed: expected image/png")
+        with SessionLocal() as db:
+            token_row = db.query(QrToken).filter(QrToken.point_id == point["id"], QrToken.is_active.is_(True)).first()
+            if not token_row:
+                raise RuntimeError("generate_qr_code failed: active QR token not found in database")
+            qr_token = token_row.token
 
         product = assert_status(
             client.post(
@@ -90,13 +95,13 @@ def main() -> None:
         auth_header = {"Authorization": f"Bearer {auth['access_token']}"}
 
         assert_status(
-            client.post("/api/scan", headers=auth_header, json={"token": qr["token"]}),
+            client.post("/api/scan", headers=auth_header, json={"token": qr_token}),
             200,
             "scan",
         )
 
         assert_status(
-            client.post("/api/scan", headers=auth_header, json={"token": qr["token"]}),
+            client.post("/api/scan", headers=auth_header, json={"token": qr_token}),
             409,
             "rescan",
         )

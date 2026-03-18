@@ -47,8 +47,7 @@ docker compose up --build
 - `POST /api/shop/products` - создать товар, только администратор.
 - `POST /api/shop/redeem/{product_id}` - обменять баллы на товар.
 - `POST /api/admin/points` - создать точку начисления, только администратор.
-- `POST /api/admin/points/{point_id}/qr-token` - сгенерировать или ротировать QR-токен точки, только администратор.
-- `GET /api/admin/points/{point_id}/qr-code` - получить PNG-картинку QR для активного токена точки, только администратор.
+- `POST /api/admin/points/{point_id}/qr-code` - сгенерировать новый QR-код точки и сразу получить PNG-картинку, только администратор.
 - `GET /api/leaderboard?limit=10&offset=0` - рейтинг участников по балансу баллов.
 
 ## Примеры curl
@@ -66,17 +65,10 @@ curl -X POST http://localhost:8000/api/admin/points \
   }'
 ```
 
-### Сгенерировать QR-токен для точки
+### Сгенерировать PNG QR-кода для точки
 
 ```bash
-curl -X POST http://localhost:8000/api/admin/points/1/qr-token \
-  -H 'X-Admin-Token: super-admin-token'
-```
-
-### Получить PNG QR-кода для точки
-
-```bash
-curl http://localhost:8000/api/admin/points/1/qr-code \
+curl -X POST http://localhost:8000/api/admin/points/1/qr-code \
   -H 'X-Admin-Token: super-admin-token' \
   --output point-1.png
 ```

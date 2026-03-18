@@ -85,14 +85,6 @@ class PointRead(BaseModel):
     reward_points: int
 
 
-class QrTokenResponse(BaseModel):
-    point_id: int
-    point_name: str
-    token: str
-    expires_at: datetime
-    ttl_seconds: int
-
-
 class RedemptionResponse(BaseModel):
     message: str
     product_id: int
