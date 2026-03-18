@@ -10,6 +10,7 @@ const state = reactive({
   token: null,
   me: null,
   products: [],
+  leaderboard: [],
   statusMessage: "",
   statusKind: "",
   isLoginPending: false,
@@ -70,12 +71,16 @@ async function loadProducts() {
   state.products = await api("/api/shop/products", { method: "GET" });
 }
 
+async function loadLeaderboard() {
+  state.leaderboard = await api("/api/leaderboard?limit=10&offset=0", { method: "GET" });
+}
+
 async function loadMe() {
   state.me = await api("/api/me", { method: "GET" });
 }
 
 async function hydrateDashboard() {
-  await Promise.all([loadMe(), loadProducts()]);
+  await Promise.all([loadMe(), loadProducts(), loadLeaderboard()]);
 }
 
 async function login() {
@@ -183,6 +188,16 @@ createApp({
       return "Открой эту страницу из Telegram через кнопку бота и авторизуйся, чтобы начать.";
     });
     const isAuthorized = computed(() => Boolean(state.token && state.me));
+    const leaderboardRows = computed(() =>
+      state.leaderboard.map((item, index) => ({
+        ...item,
+        place: index + 1,
+        displayName:
+          [item.first_name, item.last_name].filter(Boolean).join(" ").trim() ||
+          item.username ||
+          `Участник ${item.telegram_id}`,
+      }))
+    );
 
     return {
       state,
@@ -190,6 +205,7 @@ createApp({
       profileName,
       authMeta,
       isAuthorized,
+      leaderboardRows,
       login,
       scanByToken,
       startCameraScan,
@@ -338,6 +354,23 @@ createApp({
             <div v-else class="empty">Покупок пока нет.</div>
           </section>
         </div>
+
+        <section v-if="isAuthorized" class="card fade-up">
+          <h2>Доска лидеров</h2>
+          <p class="card-subtitle">Топ-10 участников по сумме всех заработанных баллов.</p>
+          <div v-if="leaderboardRows.length" class="list">
+            <article v-for="item in leaderboardRows" :key="item.telegram_id" class="list-item">
+              <div class="list-top">
+                <div>
+                  <div class="item-title">#{{ item.place }} · {{ item.displayName }}</div>
+                  <div class="item-meta">@{{ item.username || 'без username' }}</div>
+                </div>
+                <span class="pill">{{ item.balance }} заработано</span>
+              </div>
+            </article>
+          </div>
+          <div v-else class="empty">Рейтинг пока пуст.</div>
+        </section>
       </div>
     </main>
   `,

@@ -8,13 +8,13 @@ import urllib.request
 DEFAULT_PRODUCTS = [
     {
         "name": "Футболка HSE Business Club",
-        "description": "Белая футболка с логотипом форума",
+        "description": "Белая футболка",
         "price_points": 120,
         "stock": 15,
     },
     {
         "name": "Термокружка",
-        "description": "Металлическая термокружка для кофе",
+        "description": "Металлическая термокружка",
         "price_points": 180,
         "stock": 10,
     },
@@ -26,19 +26,19 @@ DEFAULT_PRODUCTS = [
     },
     {
         "name": "Шоппер",
-        "description": "Тканевый шоппер с принтом форума",
+        "description": "Тканевый шоппер",
         "price_points": 90,
         "stock": 20,
     },
     {
-        "name": "Блокнот Premium",
-        "description": "Блокнот в твёрдой обложке для заметок на форуме",
+        "name": "Блокнот",
+        "description": "Блокнот",
         "price_points": 70,
         "stock": 25,
     },
     {
-        "name": "Ручка с гравировкой",
-        "description": "Металлическая ручка с брендингом события",
+        "name": "Ручка",
+        "description": "Металлическая ручка HSE",
         "price_points": 35,
         "stock": 60,
     },

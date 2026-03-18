@@ -265,11 +265,6 @@ def leaderboard(
         .group_by(PointVisit.user_id)
         .subquery()
     )
-    spent_subquery = (
-        select(Redemption.user_id.label("user_id"), func.coalesce(func.sum(Redemption.points_spent), 0).label("spent"))
-        .group_by(Redemption.user_id)
-        .subquery()
-    )
 
     rows = db.execute(
         select(
@@ -277,12 +272,9 @@ def leaderboard(
             User.first_name,
             User.last_name,
             User.username,
-            (
-                func.coalesce(awarded_subquery.c.awarded, 0) - func.coalesce(spent_subquery.c.spent, 0)
-            ).label("balance"),
+            func.coalesce(awarded_subquery.c.awarded, 0).label("balance"),
         )
         .outerjoin(awarded_subquery, awarded_subquery.c.user_id == User.id)
-        .outerjoin(spent_subquery, spent_subquery.c.user_id == User.id)
         .order_by(desc("balance"), User.id)
         .limit(limit)
         .offset(offset)

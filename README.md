@@ -1,71 +1,74 @@
 # HSE Business Club Backend
 
-REST API для Telegram Mini App бизнес-форума. Сервис хранит участников, начисляет баллы за посещение точек по QR-кодам, показывает баланс и историю, а также позволяет обменивать баллы на товары в магазине.
+Небольшой backend для Telegram Mini App. Пользователь сканирует QR-коды на точках форума, получает баллы и тратит их на товары в магазине.
 
-## Стек
-
+Внутри:
 - FastAPI
 - PostgreSQL
-- SQLAlchemy ORM
-- JWT
+- JWT-авторизация после проверки Telegram `initData`
+- QR-коды с TTL и ротацией
+- Mini App frontend прямо внутри сервиса
 
-## Локальный запуск через Docker Compose
+## Как запустить
 
-1. Скопировать переменные окружения:
+Сначала скопируй переменные окружения:
 
 ```bash
 cp .env.example .env
 ```
 
-2. При необходимости изменить значения в `.env`:
+Минимум, что стоит проверить в `.env`:
 
-- `DATABASE_URL` должен указывать на контейнер `db`
-- `JWT_SECRET` нужен для подписи JWT
-- `TELEGRAM_BOT_TOKEN` нужен для валидации `initData` от Telegram Mini App
-- `QR_TTL_SECONDS` задаёт TTL QR-токена
-- `ADMIN_TOKEN` используется в заголовке `X-Admin-Token` для админских эндпоинтов
+```env
+DATABASE_URL=postgresql+psycopg2://app:app@db:5432/hse_business_club
+JWT_SECRET=your-secret
+TELEGRAM_BOT_TOKEN=your-bot-token
+QR_TTL_SECONDS=120
+ADMIN_TOKEN=admin
+```
 
-3. Поднять сервисы одной командой:
+Дальше обычный запуск:
 
 ```bash
 docker compose up --build
 ```
 
-4. После запуска:
-
-- Swagger UI: `http://localhost:8000/docs`
-- OpenAPI JSON: `http://localhost:8000/openapi.json`
+После старта:
+- Swagger: `http://localhost:8000/docs`
+- Mini App: `http://localhost:8000/mini`
 - Healthcheck: `http://localhost:8000/health`
-- Mini App page: `http://localhost:8000/mini`
+- Adminer: `http://localhost:8080`
 
-## Реализованные эндпоинты
+## Что умеет API
 
-- `POST /api/auth/telegram` - авторизация по `initData` Telegram Mini App, выдаёт JWT.
-- `GET /api/me` - текущий баланс пользователя и история начислений.
-- `POST /api/scan` - начисление баллов по QR-токену, только один раз на точку.
-- `GET /api/shop/products` - список товаров магазина.
-- `POST /api/shop/products` - создать товар, только администратор.
-- `POST /api/shop/redeem/{product_id}` - обменять баллы на товар.
-- `POST /api/admin/points` - создать точку начисления, только администратор.
-- `POST /api/admin/points/{point_id}/qr-code` - сгенерировать новый QR-код точки и сразу получить PNG-картинку, только администратор.
-- `GET /api/leaderboard?limit=10&offset=0` - рейтинг участников по балансу баллов.
+- `POST /api/auth/telegram` — логин через Telegram Mini App
+- `GET /api/me` — баланс, история начислений и покупки
+- `POST /api/scan` — начисление баллов по QR
+- `GET /api/shop/products` — список товаров
+- `POST /api/shop/redeem/{product_id}` — обмен баллов на товар
+- `GET /api/leaderboard` — рейтинг пользователей
 
-## Примеры curl
+Админские ручки:
+- `POST /api/admin/points` — создать точку
+- `POST /api/admin/points/{point_id}/qr-code` — выпустить новый QR и сразу получить PNG
+- `POST /api/shop/products` — создать товар
 
-### Создать точку
+## Пара полезных запросов
+
+Создать точку:
 
 ```bash
 curl -X POST http://localhost:8000/api/admin/points \
   -H 'Content-Type: application/json' \
   -H 'X-Admin-Token: admin' \
   -d '{
-    "name": "Стенд партнёра 1",
-    "description": "Сканирование у стенда",
+    "name": "Стенд 1",
+    "description": "Партнёрская зона",
     "reward_points": 50
   }'
 ```
 
-### Сгенерировать PNG QR-кода для точки
+Сгенерировать QR-картинку:
 
 ```bash
 curl -X POST http://localhost:8000/api/admin/points/1/qr-code \
@@ -73,7 +76,10 @@ curl -X POST http://localhost:8000/api/admin/points/1/qr-code \
   --output point-1.png
 ```
 
-### Создать товар
+Для быстрой ручной проверки в репозитории есть готовый пример QR-кода:
+[assets/qr_for_testing.png](/Users/artaleee/projects/test_tasks/HSE_business_club_backend/assets/qr_for_testing.png)
+
+Создать товар:
 
 ```bash
 curl -X POST http://localhost:8000/api/shop/products \
@@ -87,46 +93,9 @@ curl -X POST http://localhost:8000/api/shop/products \
   }'
 ```
 
-### Авторизация пользователя
+## Быстрая локальная проверка
 
-`initData` должен приходить из Telegram Mini App. Пример запроса:
-
-```bash
-curl -X POST http://localhost:8000/api/auth/telegram \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "init_data": "query_id=AAHdF6IQAAAAAN0XohDhrOrc&user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Ivan%22%7D&auth_date=1710000000&hash=replace_me"
-  }'
-```
-
-### Просканировать QR
-
-```bash
-curl -X POST http://localhost:8000/api/scan \
-  -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer <JWT>' \
-  -d '{
-    "token": "<qr_token>"
-  }'
-```
-
-### Получить личный кабинет
-
-```bash
-curl http://localhost:8000/api/me \
-  -H 'Authorization: Bearer <JWT>'
-```
-
-### Обменять баллы на товар
-
-```bash
-curl -X POST http://localhost:8000/api/shop/redeem/1 \
-  -H 'Authorization: Bearer <JWT>'
-```
-
-## Smoke test
-
-Для быстрого локального прогона без Docker можно использовать готовый скрипт [scripts/smoke_test.py](/Users/artaleee/projects/test_tasks/HSE_business_club_backend/scripts/smoke_test.py):
+Есть smoke test:
 
 ```bash
 DATABASE_URL=sqlite:////tmp/hse_business_club_smoke.db \
@@ -136,20 +105,16 @@ JWT_SECRET=test-secret \
 python3 scripts/smoke_test.py
 ```
 
-Скрипт последовательно проверяет:
+И скрипт для заполнения магазина товарами:
 
-- создание точки
-- ротацию QR-токена
-- создание товара
-- авторизацию через Telegram `initData`
-- первое и повторное сканирование
-- личный кабинет
-- обмен баллов на товар
-- leaderboard
+```bash
+ADMIN_TOKEN=admin python3 scripts/seed_products.py
+```
 
-## Принятые решения
+Если API не на `localhost:8000`, можно передать `API_URL`:
 
-- Баланс считается как сумма начислений минус сумма списаний.
-- Повторный визит на ту же точку запрещён на уровне БД и API.
-- Ротация QR-токена помечает предыдущие активные токены неактивными.
-- Для админских операций используется простой заголовок `X-Admin-Token`, потому что отдельная admin-auth схема в задаче не задана.
+```bash
+API_URL=https://your-host \
+ADMIN_TOKEN=admin \
+python3 scripts/seed_products.py
+```
