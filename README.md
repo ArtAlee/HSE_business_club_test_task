@@ -18,10 +18,15 @@ cp .env.example .env
 Опционально, изменить содержимое в `.env`:
 
 ```env
+# строка подключения к Postgres внутри docker compose
 DATABASE_URL=postgresql+psycopg2://app:app@db:5432/hse_business_club
+# секрет для подписи JWT (лучше сгенерировать через python3 -c "import secrets; print(secrets.token_hex(32))")
 JWT_SECRET=your-secret
+# токен Telegram-бота от @BotFather
 TELEGRAM_BOT_TOKEN=your-bot-token
+# TTL QR-кода в секундах
 QR_TTL_SECONDS=120
+# токен для админских ручек
 ADMIN_TOKEN=admin
 ```
 
