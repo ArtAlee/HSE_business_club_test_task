@@ -86,7 +86,7 @@ curl -X POST http://localhost:8000/api/admin/points/1/qr-code \
   --output point-1.png
 ```
 
-Для быстрой ручной проверки в репозитории есть готовый пример QR-кода:
+Для быстрой проверки готовый пример QR-кода:
 ![Тестовый QR-код](assets/qr_for_testing.png)
 
 Создать товар:
