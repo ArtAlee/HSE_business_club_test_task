@@ -2,6 +2,13 @@
 
 Backend для Telegram Mini App (+примитивный frontend для мини аппа). Пользователь сканирует QR-коды на точках форума, получает баллы и тратит их на товары в магазине.
 
+TL;DR:
+- бот в телеграмм: `@HSE_BusinessBot`
+- админка / Swagger: `https://mini.artaleee.com/docs`
+- админский токен для теста: `super-admin-token`
+- сгенерировать QR для точки с id `1`: `https://mini.artaleee.com/docs#/Admin/get_point_qr_code_api_admin_points__point_id__qr_code_post`
+
+
 Стек:
 - FastAPI
 - PostgreSQL
