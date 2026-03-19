@@ -7,6 +7,7 @@ TL;DR:
 - админка / Swagger: [https://mini.artaleee.com/docs](https://mini.artaleee.com/docs)
 - админский токен для теста: `super-admin-token`
 - сгенерировать QR для точки с id `1`: [открыть метод в Swagger](https://mini.artaleee.com/docs#/Admin/get_point_qr_code_api_admin_points__point_id__qr_code_post)
+- отсканировать qr в боте (кнопка "Сканировать камерой")
 
 
 Стек:
