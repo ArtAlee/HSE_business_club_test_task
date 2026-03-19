@@ -38,7 +38,7 @@ QR_TTL_SECONDS=120
 ADMIN_TOKEN=admin
 ```
 
-Запустить сервис черещ docker compose:
+Запустить сервис через docker compose:
 
 ```bash
 docker compose up --build -d
