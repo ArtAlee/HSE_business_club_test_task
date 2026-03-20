@@ -63,7 +63,56 @@ docker compose up --build -d
 - `POST /api/admin/points/{point_id}/qr-code` — выпустить новый QR и сразу получить PNG
 - `POST /api/shop/products` — создать товар
 
-## Пара полезных запросов
+## Примеры curl
+
+Логин через Telegram:
+
+`initData` приходит из Telegram Mini App, поэтому ниже только шаблон запроса.
+
+```bash
+curl -X POST http://localhost:8000/api/auth/telegram \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "init_data": "query_id=AAHdF6IQAAAAAN0XohDhrOrc&user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Ivan%22%7D&auth_date=1710000000&hash=replace_me"
+  }'
+```
+
+Получить профиль:
+
+```bash
+curl http://localhost:8000/api/me \
+  -H 'Authorization: Bearer <JWT>'
+```
+
+Начислить баллы по QR:
+
+```bash
+curl -X POST http://localhost:8000/api/scan \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <JWT>' \
+  -d '{
+    "token": "<qr_token>"
+  }'
+```
+
+Получить товары:
+
+```bash
+curl http://localhost:8000/api/shop/products
+```
+
+Обменять баллы на товар:
+
+```bash
+curl -X POST http://localhost:8000/api/shop/redeem/1 \
+  -H 'Authorization: Bearer <JWT>'
+```
+
+Посмотреть leaderboard:
+
+```bash
+curl "http://localhost:8000/api/leaderboard?limit=10&offset=0"
+```
 
 Создать точку:
 
